@@ -3,31 +3,61 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 interface Idea {
   id: number;
   content: string;
+  category_id: number | null;
+  categories: Category | null;
 }
 
 export default function Home() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newIdea, setNewIdea] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<number | "">("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetchIdeas();
+    fetchCategories();
   }, []);
+
+  async function fetchCategories() {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name")
+      .order("name");
+
+    if (error) {
+      setError("Nepodarilo sa načítať kategórie.");
+      return;
+    }
+    setCategories(data ?? []);
+  }
 
   async function fetchIdeas() {
     const { data, error } = await supabase
       .from("ideas")
-      .select("id, content")
+      .select("id, content, category_id, categories(id, name)")
       .order("id", { ascending: false });
 
     if (error) {
       setError("Nepodarilo sa načítať nápady.");
       return;
     }
-    setIdeas(data ?? []);
+    setIdeas(
+      (data ?? []).map((item) => ({
+        ...item,
+        categories: Array.isArray(item.categories)
+          ? item.categories[0] ?? null
+          : item.categories ?? null,
+      }))
+    );
   }
 
   async function addIdea() {
@@ -35,7 +65,11 @@ export default function Home() {
     if (!trimmed) return;
 
     setError("");
-    const { error } = await supabase.from("ideas").insert({ content: trimmed });
+    const insertData: { content: string; category_id?: number } = { content: trimmed };
+    if (selectedCategory !== "") {
+      insertData.category_id = selectedCategory;
+    }
+    const { error } = await supabase.from("ideas").insert(insertData);
 
     if (error) {
       setError("Nepodarilo sa pridať nápad.");
@@ -43,6 +77,7 @@ export default function Home() {
     }
 
     setNewIdea("");
+    setSelectedCategory("");
     fetchIdeas();
   }
 
@@ -78,6 +113,18 @@ export default function Home() {
           onChange={(e) => setNewIdea(e.target.value)}
           onKeyDown={handleKeyDown}
         />
+        <select
+          className="category-select"
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : "")}
+        >
+          <option value="">Bez kategórie</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
         <button className="btn-add" onClick={addIdea} disabled={!newIdea.trim()}>
           Pridať
         </button>
@@ -89,7 +136,12 @@ export default function Home() {
         <ul className="ideas-list">
           {ideas.map((idea) => (
             <li key={idea.id} className="idea-item">
-              <span>{idea.content}</span>
+              <div className="idea-content">
+                <span>{idea.content}</span>
+                <span className="idea-category">
+                  {idea.categories?.name ?? "Bez kategórie"}
+                </span>
+              </div>
               <button className="btn-delete" onClick={() => deleteIdea(idea.id)}>
                 Vymazať
               </button>

@@ -41,19 +41,33 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 ## Supabase schéma
 
+Tabuľka `categories`:
+
+| Stĺpec | Typ  | Popis                                    |
+|---------|------|------------------------------------------|
+| `id`    | int8 | Primary key, generated always as identity |
+| `name`  | text | Názov kategórie                          |
+
 Tabuľka `ideas`:
 
-| Stĺpec   | Typ    | Popis                                    |
-|-----------|--------|------------------------------------------|
-| `id`      | int8   | Primary key, generated always as identity |
-| `content` | text   | Text nápadu                              |
+| Stĺpec       | Typ  | Popis                                    |
+|---------------|------|------------------------------------------|
+| `id`          | int8 | Primary key, generated always as identity |
+| `content`     | text | Text nápadu                              |
+| `category_id` | int8 | FK na categories(id), nullable           |
 
 SQL na vytvorenie:
 
 ```sql
+create table categories (
+  id bigint generated always as identity primary key,
+  name text not null
+);
+
 create table ideas (
   id bigint generated always as identity primary key,
-  content text not null
+  content text not null,
+  category_id bigint references categories(id)
 );
 ```
 
@@ -63,6 +77,9 @@ create table ideas (
 - Supabase klient je importovaný z `src/lib/supabase.ts`
 - Žiadne server components ani API routes - priama komunikácia klienta so Supabase
 - Nápady sú zoradené od najnovšieho (order by id desc)
+- Kategórie sa načítavajú zo Supabase tabuľky `categories` a zobrazujú v dropdown pri pridávaní
+- Nápady obsahujú JOIN na `categories` cez `category_id` (nullable FK)
+- Ak nápad nemá kategóriu, zobrazí sa "Bez kategórie"
 - Štýly sú v čistom CSS (bez CSS frameworkov)
 - UI je v slovenčine
 
