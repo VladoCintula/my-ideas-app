@@ -55,6 +55,7 @@ Tabuľka `ideas`:
 | `id`          | int8 | Primary key, generated always as identity |
 | `content`     | text | Text nápadu                              |
 | `category_id` | int8 | FK na categories(id), nullable           |
+| `user_id`     | uuid | FK na auth.users(id), identifikátor užívateľa |
 
 SQL na vytvorenie:
 
@@ -67,17 +68,28 @@ create table categories (
 create table ideas (
   id bigint generated always as identity primary key,
   content text not null,
-  category_id bigint references categories(id)
+  category_id bigint references categories(id),
+  user_id uuid references auth.users(id) not null
 );
+```
+
+SQL na pridanie stĺpca `user_id` do existujúcej tabuľky:
+
+```sql
+alter table ideas add column user_id uuid references auth.users(id);
 ```
 
 ## Architektúra
 
 - Celá aplikácia beží v jednom client componente (`page.tsx`)
 - Supabase klient je importovaný z `src/lib/supabase.ts`
+- Autentifikácia cez Supabase Auth (email + heslo)
+- Neprihlásený užívateľ vidí login/register formulár, prihlásený vidí zápisník
+- Každý nápad je viazaný na `user_id`, načítavajú sa len nápady prihláseného užívateľa
 - Žiadne server components ani API routes - priama komunikácia klienta so Supabase
 - Nápady sú zoradené od najnovšieho (order by id desc)
 - Kategórie sa načítavajú zo Supabase tabuľky `categories` a zobrazujú v dropdown pri pridávaní
+- Nové kategórie je možné vytvárať priamo v UI cez tlačidlo "+" vedľa dropdownu (inline formulár)
 - Nápady obsahujú JOIN na `categories` cez `category_id` (nullable FK)
 - Ak nápad nemá kategóriu, zobrazí sa "Bez kategórie"
 - Štýly sú v čistom CSS (bez CSS frameworkov)
