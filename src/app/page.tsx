@@ -66,8 +66,9 @@ export default function Home() {
     setAuthSubmitting(true);
 
     if (authMode === "forgot") {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: "http://localhost:3000/reset-password",
+        redirectTo: `${siteUrl}/reset-password`,
       });
       if (error) {
         setAuthError(error.message);
