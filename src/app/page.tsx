@@ -30,11 +30,12 @@ export default function Home() {
   const [newCategoryName, setNewCategoryName] = useState("");
 
   // Auth form state
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authMode, setAuthMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -63,6 +64,19 @@ export default function Home() {
     e.preventDefault();
     setAuthError("");
     setAuthSubmitting(true);
+
+    if (authMode === "forgot") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: "http://localhost:3000/reset-password",
+      });
+      if (error) {
+        setAuthError(error.message);
+      } else {
+        setForgotSuccess(true);
+      }
+      setAuthSubmitting(false);
+      return;
+    }
 
     const { error } =
       authMode === "login"
@@ -194,49 +208,76 @@ export default function Home() {
       <div className="container">
         <h1>Zápisník nápadov</h1>
         <div className="auth-card">
-          <h2>{authMode === "login" ? "Prihlásenie" : "Registrácia"}</h2>
+          <h2>
+            {authMode === "login"
+              ? "Prihlásenie"
+              : authMode === "register"
+                ? "Registrácia"
+                : "Obnovenie hesla"}
+          </h2>
           {authError && <p className="error">{authError}</p>}
-          <form onSubmit={handleAuth} className="auth-form">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              placeholder="Heslo"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-            />
-            <button type="submit" className="btn-add" disabled={authSubmitting}>
-              {authSubmitting
-                ? "Čakaj..."
-                : authMode === "login"
-                  ? "Prihlásiť sa"
-                  : "Registrovať sa"}
-            </button>
-          </form>
-          <p className="auth-switch">
-            {authMode === "login" ? (
-              <>
-                Nemáš účet?{" "}
-                <button onClick={() => { setAuthMode("register"); setAuthError(""); }}>
-                  Registrovať sa
+          {authMode === "forgot" && forgotSuccess ? (
+            <>
+              <p className="success">Email s odkazom bol odoslaný.</p>
+              <p className="auth-switch">
+                <button onClick={() => { setAuthMode("login"); setAuthError(""); setForgotSuccess(false); }}>
+                  Späť na prihlásenie
                 </button>
-              </>
-            ) : (
-              <>
-                Máš účet?{" "}
-                <button onClick={() => { setAuthMode("login"); setAuthError(""); }}>
-                  Prihlásiť sa
+              </p>
+            </>
+          ) : (
+            <>
+              <form onSubmit={handleAuth} className="auth-form">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                {authMode !== "forgot" && (
+                  <input
+                    type="password"
+                    placeholder="Heslo"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                )}
+                <button type="submit" className="btn-add" disabled={authSubmitting}>
+                  {authSubmitting
+                    ? "Čakaj..."
+                    : authMode === "login"
+                      ? "Prihlásiť sa"
+                      : authMode === "register"
+                        ? "Registrovať sa"
+                        : "Odoslať odkaz"}
                 </button>
-              </>
-            )}
-          </p>
+              </form>
+              <p className="auth-switch">
+                {authMode === "login" ? (
+                  <>
+                    Nemáš účet?{" "}
+                    <button onClick={() => { setAuthMode("register"); setAuthError(""); }}>
+                      Registrovať sa
+                    </button>
+                    <br />
+                    <button onClick={() => { setAuthMode("forgot"); setAuthError(""); setForgotSuccess(false); }}>
+                      Zabudol som heslo
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Máš účet?{" "}
+                    <button onClick={() => { setAuthMode("login"); setAuthError(""); setForgotSuccess(false); }}>
+                      Prihlásiť sa
+                    </button>
+                  </>
+                )}
+              </p>
+            </>
+          )}
         </div>
       </div>
     );

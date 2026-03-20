@@ -17,7 +17,9 @@ src/
 └── app/
     ├── layout.tsx          # Root layout (lang="sk")
     ├── globals.css         # Globálne štýly (plain CSS, bez Tailwind)
-    └── page.tsx            # Hlavná stránka - celá CRUD logika
+    ├── page.tsx            # Hlavná stránka - celá CRUD logika
+    └── reset-password/
+        └── page.tsx        # Stránka na obnovenie hesla
 ```
 
 ## Príkazy
@@ -81,10 +83,13 @@ alter table ideas add column user_id uuid references auth.users(id);
 
 ## Architektúra
 
-- Celá aplikácia beží v jednom client componente (`page.tsx`)
+- Hlavná CRUD logika beží v jednom client componente (`page.tsx`)
 - Supabase klient je importovaný z `src/lib/supabase.ts`
 - Autentifikácia cez Supabase Auth (email + heslo)
 - Neprihlásený užívateľ vidí login/register formulár, prihlásený vidí zápisník
+- Obnovenie hesla: odkaz "Zabudol som heslo" na login formulári → zadanie emailu → `resetPasswordForEmail()` s redirectTo na `/reset-password`
+- Stránka `/reset-password` prijme token z emailu a umožní zadať nové heslo cez `updateUser({ password })`
+- Po úspešnej zmene hesla presmerovanie na hlavnú stránku
 - Každý nápad je viazaný na `user_id`, načítavajú sa len nápady prihláseného užívateľa
 - Žiadne server components ani API routes - priama komunikácia klienta so Supabase
 - Nápady sú zoradené od najnovšieho (order by id desc)

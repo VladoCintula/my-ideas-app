@@ -226,6 +226,13 @@ h1 {
   color: #4338ca;
 }
 
+.success {
+  text-align: center;
+  color: #10b981;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+
 .btn-new-category {
   width: 40px;
   height: 40px;
