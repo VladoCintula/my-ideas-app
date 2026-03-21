@@ -96,6 +96,17 @@ export default function Home() {
     setAuthSubmitting(false);
   }
 
+  async function handleGoogleLogin() {
+    setAuthError("");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) {
+      setAuthError(error.message);
+    }
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut();
     setIdeas([]);
@@ -256,6 +267,16 @@ export default function Home() {
                         : "Odoslať odkaz"}
                 </button>
               </form>
+              <div className="auth-divider">
+                <span>alebo</span>
+              </div>
+              <button
+                type="button"
+                className="btn-google"
+                onClick={handleGoogleLogin}
+              >
+                Prihlásiť sa cez Google
+              </button>
               <p className="auth-switch">
                 {authMode === "login" ? (
                   <>

@@ -85,8 +85,9 @@ alter table ideas add column user_id uuid references auth.users(id);
 
 - Hlavná CRUD logika beží v jednom client componente (`page.tsx`)
 - Supabase klient je importovaný z `src/lib/supabase.ts`
-- Autentifikácia cez Supabase Auth (email + heslo)
-- Neprihlásený užívateľ vidí login/register formulár, prihlásený vidí zápisník
+- Autentifikácia cez Supabase Auth (email + heslo, Google OAuth)
+- Neprihlásený užívateľ vidí login/register formulár s možnosťou prihlásenia cez Google, prihlásený vidí zápisník
+- Google OAuth: tlačidlo "Prihlásiť sa cez Google" pod formulárom s oddeľovačom "alebo", volá `signInWithOAuth({ provider: 'google' })` s redirectTo na origin
 - Obnovenie hesla: odkaz "Zabudol som heslo" na login formulári → zadanie emailu → `resetPasswordForEmail()` s redirectTo na `/reset-password`
 - Stránka `/reset-password` prijme token z emailu a umožní zadať nové heslo cez `updateUser({ password })`
 - Po úspešnej zmene hesla presmerovanie na hlavnú stránku
